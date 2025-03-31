@@ -1,0 +1,103 @@
+---
+title: "Customizing LaTeX tables in R"
+output: html_document
+date: "2025-03-31"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE}
+library(dplyr)
+library(tidyr)
+library(xtable)
+data(ChickWeight)
+df <- ChickWeight |> 
+  group_by(Chick) |> 
+  mutate("wgain_prop" = (weight-weight[1])/weight[1]) |> 
+  group_by(Diet, Time) |> 
+  summarise("mean_weight" = mean(weight),
+            "mean_wgain_perc" = round(100*mean(wgain_prop), digits = 1)) |> 
+  group_by(Time) |> 
+  mutate("diet_max" = if_else(Time == 0, NA, Diet[which.max(mean_weight)])) |> 
+  mutate("max_growth_perc" = max(mean_wgain_perc)) |> 
+  pivot_wider(id_cols = c(Time, diet_max, max_growth_perc),
+              names_from = Diet,
+              values_from = mean_weight,
+              names_prefix = "mean_gm_") |> 
+  select("Days" = Time,
+         "Diet 1" = mean_gm_1, "Diet 2" = mean_gm_2, "Diet 3" = mean_gm_3, "Diet 4" = mean_gm_4,
+         "Max relative growth (%)" = max_growth_perc,
+         "Winner diet" = diet_max) |> 
+  t() |> as.data.frame() |> 
+  mutate(across(everything(), ~ as.numeric(.x)))
+```
+
+Formatting displayed digits
+```{r}
+# Digit matrix indicating number of digits for each table cell
+d_mat <- matrix(0, nrow(df), ncol(df)) # initialized with zeros
+
+# Row 1 and 7 should continue to be zeros, since they are integers.
+
+# We will display 1 digit for the mean weights in each Diet-row
+d_mat[2:6, ] <- 1
+
+# Deviations from the standard digit pattern:
+dev_mat <- matrix(F, nrow(df), ncol(df))
+# If a percentage is straight out 0, we will display it with 0 digits
+dev_mat[6,] <- df[6,] == 0
+d_mat[dev_mat] <- 0
+
+# Note: xtable() will by default print the rownames of df in the first column,
+# so its 'align' argument must be of length ncol(df)+1 and the 'digits' argument
+# must have a column appended on its left side.
+chick_tbl <- xtable(df,
+                    caption = "Chicken weight gains (gm) for four diets.",
+                    label = "tab:chick",
+                    align = c("l", rep("c", ncol(df))),
+                    digits = cbind(0, d_mat))
+
+print(chick_tbl, file = file.path("xtable1.tex"),
+      floating.environment = "table*",
+      table.placement = NULL,
+      caption.placement = "top",
+      format.args = list(big.mark = ",", decimal.mark = "."), # thousand separator and decimal mark
+      include.rownames = T, include.colnames = F,
+      booktabs = T)
+```
+
+Customizing LaTeX table
+```{r}
+tab1 <- readr::read_lines(file.path("xtable1.tex"))
+
+tab1 <- c(tab1[3:6],
+          "\\vspace{1mm}",
+          "\\begin{adjustbox}{max width=\\textwidth}",
+          "\\begin{threeparttable}",
+          tab1[7],
+          "\\toprule[2pt]",
+          tab1[10],
+          "\\midrule[1pt]",
+          sub("  Diet 1", "Diet 1\\tnote{$*$}", tab1[11], fixed = TRUE),
+          sub("  Diet 2", "Diet 2\\tnote{$\\dagger$}", tab1[12], fixed = TRUE),
+          sub("  Diet 3", "Diet 3\\tnote{$\\ddagger$}", tab1[13], fixed = TRUE),
+          sub("  Diet 4", "Diet 4\\tnote{$\\S$}", tab1[14], fixed = TRUE),
+          "\\cmidrule(lr){2-13}",
+          tab1[15:16],
+          "\\bottomrule[2pt]",
+          tab1[18],
+          "\\begin{tablenotes}",
+          "\\item[$*$] Slow growth, but maybe better taste.",
+          "\\item[$\\dagger$] General health status was not reported.",
+          "\\item[$\\ddagger$] Diet cost was not reported.",
+          "\\item[$\\S$] Could change to diet 3 after day 12 make these chickens explode?",
+          "\\end{tablenotes}",
+          "\\end{threeparttable}",
+          "\\end{adjustbox}",
+          tab1[19])
+
+readr::write_lines(tab1, file.path("table1.tex"))
+file.remove(file.path("xtable1.tex"))
+```
