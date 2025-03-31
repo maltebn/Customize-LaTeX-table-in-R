@@ -1,5 +1,6 @@
 In LaTeX, you have endless table formatting options.
 An R package intended to assist in the R-to-LaTeX-table process should be easy to use, and therefore should just give you a basic template.
+
 You want to avoid any copy-pasting of numbers!
 That is, if you re-compile your R scripts with new numbers, you want your LaTeX-tables to be updated instantly.
 
