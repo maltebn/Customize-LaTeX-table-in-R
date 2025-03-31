@@ -1,10 +1,9 @@
 In LaTeX, you have endless table formatting options.
 An R package intended to assist in the R-to-LaTeX-table process should be easy to use, and therefore should just give you a basic template.
-
-You want to avoid any copy-pasting of numbers!
+But you still want to utilize all of LaTeX's formatting options, and you absolutely do NOT want to copy-paste anything from R into LaTeX!
 That is, if you re-compile your R scripts with new numbers, you want your LaTeX-tables to be updated instantly.
 
-To create such reproducible tables with complex LaTeX-formatting, all you need is the R-package `xtable` combined with a semi-automated formatting step - all in R.
+To create such reproducible tables with detailed LaTeX-formatting, all you need is the R-package `xtable` combined with a semi-automated formatting step - all in R.
 
 The procedure followed in this repository's R-markdown file (`custom-LaTeX-table-in-R.Rmd`) don't need anymore setting up than in standard LaTeX-table formatting.
 
