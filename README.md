@@ -1,3 +1,4 @@
+# Customize any LaTeX table in R
 In LaTeX, you have endless table formatting options.
 An R package intended to assist in the R-to-LaTeX-table process should be easy to use, and therefore should just give you a basic template.
 But you still want to utilize all of LaTeX's formatting options, and you absolutely do NOT want to copy-paste anything from R into LaTeX!
